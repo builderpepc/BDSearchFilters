@@ -128,7 +128,7 @@ module.exports = class BDSearchFilters {
     isPassingFilters(result) {
         // result is an item returned by getSearchResults()
         // return ((window.ExtraSearchFilters.searchFilters.literalTerms.filter((x) => (result.firstChild.firstChild.firstChild.firstChild.getElementsByClassName(RESULT_MSG_CONTENT_CLASS).length > 0 && result.firstChild.firstChild.firstChild.firstChild.children[2].innerText.includes(x)))).length == window.ExtraSearchFilters.searchFilters.literalTerms.length);
-        return (window.ExtraSearchFilters.searchFilters.literalTerms.length > 0 ? ((window.ExtraSearchFilters.searchFilters.literalTerms.filter((x) => (result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS).length > 0 && (window.ExtraSearchFilters.searchFilters.literalsCaseSensitive ? result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS)[0].innerText.includes(x) : result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS)[0].innerText.toLowerCase().includes(x.toLowerCase()))))).length > 0) : true);
+        return (window.ExtraSearchFilters.searchFilters.literalTerms.length > 0 ? ((window.ExtraSearchFilters.searchFilters.literalTerms.filter((x) => (result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS).length > 0 && (window.ExtraSearchFilters.searchFilters.literalsCaseSensitive ? result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS)[0].innerText.includes(x) : result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS)[0].innerText.toLowerCase().includes(x.toLowerCase()))))).length >= (window.ExtraSearchFilters.searchFilters.requireAllLiterals ? window.ExtraSearchFilters.searchFilters.literalTerms.length : 0)) : true);
     }
 
     evaluateFilters() {
@@ -216,6 +216,18 @@ module.exports = class BDSearchFilters {
                         onChange: (e, s, t) => {
                             setLiteralsCaseSensitive(e);
                             window.ExtraSearchFilters.newFilters.literalsCaseSensitive = e;
+                        }
+                    })
+                }),
+                BdApi.React.createElement(function (props) {
+                    const [requireAllLiterals, setRequireAllLiterals] = useState(window.ExtraSearchFilters.searchFilters.requireAllLiterals);
+                    return BdApi.React.createElement(ZeresPluginLibrary.DiscordModules.SwitchRow, {
+                        value: requireAllLiterals,
+                        children: "Require All Literals",
+                        note: "Whether all terms from the above filter should be required or if results with any one of the terms will be shown instead.",
+                        onChange: (e, s, t) => {
+                            setRequireAllLiterals(e);
+                            window.ExtraSearchFilters.newFilters.requireAllLiterals = e;
                         }
                     })
                 })
