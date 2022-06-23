@@ -11,8 +11,8 @@ Makes use of ZeresPluginLibrary.
 - [ ] Exclude specific channels
 - [x] String literal searching
 - [ ] String literal exclusion
-- [ ] Regex searching
-- [ ] Regex exclusion
+- [x] Regex searching
+- [x] Regex exclusion
 
 ## Installation
 Install like any other BetterDiscord plugin. Download [bdsearchfilters.plugin.js](https://github.com/builderpepc/BDSearchFilters/raw/main/bdsearchfilters.plugin.js) and put it in your BetterDiscord plugins folder.
