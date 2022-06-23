@@ -1,6 +1,8 @@
 # BDSearchFilters
 Search filters for BetterDiscord. The filters are client side, so you might see pages of blank results if your filters eliminate all the results for the page.
 
+Makes use of ZeresPluginLibrary.
+
 ## Features
 - [ ] Filter bot/user messages
 - [ ] Exclude specific users
