@@ -14,6 +14,10 @@ Makes use of ZeresPluginLibrary.
 - [ ] Regex searching
 - [ ] Regex exclusion
 
+## Installation
+Install like any other BetterDiscord plugin. Download [bdsearchfilters.plugin.js](https://github.com/builderpepc/BDSearchFilters/raw/main/bdsearchfilters.plugin.js) and put it in your BetterDiscord plugins folder.
+
+For now, BDSearchFilters is not available on BetterDiscord's plugin listing.
 
 # Disclaimer
 *It is against Discord's Terms of Service to use BetterDiscord and other client modifications. By installing, using, or distributing this software you acknowledge and understand that it is your sole responsibility if something happens to your account and that the contributors of this software are not at fault.*
