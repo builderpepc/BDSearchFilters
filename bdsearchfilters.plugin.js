@@ -10,11 +10,14 @@
  */
 
 const MODAL_TEXT_CLASS = "defaultColor-24IHKz text-md-normal-304U3g spacing-2kYqCu";
-const TOTAL_RESULT_COUNT_CLASS = "totalResults-2On644";
+const TOTAL_RESULT_COUNT_CLASS = "text-md-normal-304U3g";
 const RESULT_CONTAINER_CLASS = "container-rZM65Y";
 const RESULT_MSG_CONTENT_CLASS = "messageContent-2t3eCI";
+const SMALL_TITLE = "colorStandard-1Xxp1s size14-k_3Hy4 h5-2RwDNl title-3hptVQ marginBottom8-emkd0_";
+const SEARCH_HEADER_CLASS = "searchHeader-1r_ZSh"
 
 const Dispatcher = BdApi.findModuleByProps("dirtyDispatch");
+const { useState } = BdApi.React;
 
 module.exports = class BDSearchFilters {
 
@@ -22,7 +25,9 @@ module.exports = class BDSearchFilters {
         window.ExtraSearchFilters = this;
         
         window.ExtraSearchFilters.searchFilters = {
-            literalTerms: []
+            literalTerms: [],
+            literalsCaseSensitive: false,
+            requireAllLiterals: false,
         }
     }
 
@@ -98,13 +103,22 @@ module.exports = class BDSearchFilters {
 
     updateFilters() {
         // split literals by newline and eliminate empty terms or spaces
-        window.ExtraSearchFilters.searchFilters.literalTerms = document.getElementById('extrasearchfilters-search-literal-text').value.split("\n").filter((x)=> (x && x != ' '));
+        window.ExtraSearchFilters.searchFilters.literalTerms = document.getElementById('bdsearchfilters-search-literal-text').value.split("\n").filter((x)=> (x && x != ' '));
+        for (const k of Object.keys(window.ExtraSearchFilters.newFilters)) {
+            window.ExtraSearchFilters.searchFilters[k] = window.ExtraSearchFilters.newFilters[k];
+        }
         window.ExtraSearchFilters.evaluateFilters();
+        window.ExtraSearchFilters.updateResultCount();
     };
 
     isSearchPanelOpen() {
         // selects total results count
-        return document.getElementsByClassName(TOTAL_RESULT_COUNT_CLASS).length > 0;
+        return document.getElementsByClassName(SEARCH_HEADER_CLASS).length > 0;
+    }
+
+    getResultCountElt() {
+        if (!this.isSearchPanelOpen()) return;
+        return document.getElementsByClassName(TOTAL_RESULT_COUNT_CLASS)[0];
     }
 
     getSearchResults() {
@@ -114,32 +128,70 @@ module.exports = class BDSearchFilters {
     isPassingFilters(result) {
         // result is an item returned by getSearchResults()
         // return ((window.ExtraSearchFilters.searchFilters.literalTerms.filter((x) => (result.firstChild.firstChild.firstChild.firstChild.getElementsByClassName(RESULT_MSG_CONTENT_CLASS).length > 0 && result.firstChild.firstChild.firstChild.firstChild.children[2].innerText.includes(x)))).length == window.ExtraSearchFilters.searchFilters.literalTerms.length);
-        return ((window.ExtraSearchFilters.searchFilters.literalTerms.filter((x) => (result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS).length > 0 && result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS)[0].innerText.includes(x)))).length > 0);
+        return (window.ExtraSearchFilters.searchFilters.literalTerms.length > 0 ? ((window.ExtraSearchFilters.searchFilters.literalTerms.filter((x) => (result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS).length > 0 && (window.ExtraSearchFilters.searchFilters.literalsCaseSensitive ? result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS)[0].innerText.includes(x) : result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS)[0].innerText.toLowerCase().includes(x.toLowerCase()))))).length > 0) : true);
     }
 
     evaluateFilters() {
         if (!window.ExtraSearchFilters.isSearchPanelOpen()) return;
+        let passCount = 0;
+        let totalCount = 0; // for page
         for (const rslt of window.ExtraSearchFilters.getSearchResults()) {
             if (!window.ExtraSearchFilters.isPassingFilters(rslt)) {
                 rslt.style.opacity = 0.3;
             }
             else {
                 rslt.style.opacity = 1;
+                passCount++;
             }
+            totalCount++;
+        }
+        window.ExtraSearchFilters.updateResultCount();
+    }
+
+    updateResultCount() {
+        if (!window.ExtraSearchFilters.isSearchPanelOpen()) return;
+        let resultCountElt = window.ExtraSearchFilters.getResultCountElt();
+        let results = Array.from(window.ExtraSearchFilters.getSearchResults());
+        if (!document.getElementById('bdsearchfilters-filtered-page-result-count') ) {
+            let fullCount = resultCountElt.innerText.split(" ")[0].replace(",", "");
+            
+            if (isNaN(fullCount)) {
+                fullCount = 0;
+            }
+            else {
+                fullCount = parseInt(fullCount);
+            }
+            if (fullCount > 0) {
+                resultCountElt.innerHTML = `${fullCount} total results<br><span id="bdsearchfilters-filtered-page-result-count">Loading</span>/<span id="bdsearchfilters-total-page-result-count">Loading...</span> shown on page`;
+                resultCountElt.style['font-size'] = "12px";
+                resultCountElt.style.color = "var(--text-normal)";
+            }
+            
+        }
+        document.getElementById('bdsearchfilters-filtered-page-result-count').innerText = results.filter((x)=>(x.style.opacity == 1)).length.toString();
+        document.getElementById('bdsearchfilters-total-page-result-count').innerText = results.length.toString();
+        
+    }
+
+    observer(changes) {
+        if (changes.target == this.getResultCountElt() && !changes.target.innerText.includes("total") && !changes.target.innerText.includes("...")) {
+            this.updateResultCount();
         }
     }
 
     showMenu() {
+        window.ExtraSearchFilters.newFilters = {};
         ZeresPluginLibrary.Modals.showModal(
             this.buttonLabel,
             [
                 BdApi.React.createElement('div', {class: MODAL_TEXT_CLASS}, "Keep in mind that these filters are applied on our end, not Discord's. You might have to click through pages of empty results if none of them pass these filters."),
                 
-                BdApi.React.createElement('div', {class: MODAL_TEXT_CLASS}, "If you enter terms below, results will only be included if they contain one or more of those terms. Separate with newlines."),
+                BdApi.React.createElement('h5', {class: SMALL_TITLE}, "Literal Text Filters"),
+                BdApi.React.createElement('div', {class: MODAL_TEXT_CLASS}, "If you enter terms below, results will only be included if they contain one or more of those terms (must match EXACTLY). Separate with newlines."),
                 BdApi.React.createElement(
                     'textarea', 
                     {
-                        id: "extrasearchfilters-search-literal-text",
+                        id: "bdsearchfilters-search-literal-text",
                         rows: 5,
                         readonly: false,
                         style: {
@@ -147,12 +199,27 @@ module.exports = class BDSearchFilters {
                             'color': "var(--text-normal)",
                             'font-family': "var(--font-primary)",
                             'resize': 'none',
-                            'width': '100%',
-                            'padding': '0 0 0 0'
+                            'width': 'calc(100% - 12px)',
+                            'padding': '5px'
                         }
                     },
                     this.searchFilters.literalTerms.join('\n')
-                )
+                ),
+                BdApi.React.createElement('br'),
+                BdApi.React.createElement('br'),
+                BdApi.React.createElement(function (props) {
+                    const [literalsCaseSensitive, setLiteralsCaseSensitive] = useState(window.ExtraSearchFilters.searchFilters.literalsCaseSensitive);
+                    return BdApi.React.createElement(ZeresPluginLibrary.DiscordModules.SwitchRow, {
+                        value: literalsCaseSensitive,
+                        children: "Case Sensitivity",
+                        note: "Whether the filter above should be case-sensitive.",
+                        onChange: (e, s, t) => {
+                            setLiteralsCaseSensitive(e);
+                            window.ExtraSearchFilters.newFilters.literalsCaseSensitive = e;
+                        }
+                    })
+                })
+                
             ],
             {
                 confirmText: "Apply",
@@ -162,5 +229,3 @@ module.exports = class BDSearchFilters {
     };
 
 }
-
-// Some example code used from https://gist.github.com/mininmobile/aff422d0784e78a13e167b8627633629
