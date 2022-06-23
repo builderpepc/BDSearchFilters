@@ -2,7 +2,7 @@
  * @name BDSearchFilters
  * @author builderpepc
  * @description Client-side search filters and tools.
- * @version 0.1.0a
+ * @version 0.2.0a
  * @authorLink https://github.com/builderpepc/
  * @website https://github.com/builderpepc/BDSearchFilters/
  * @source https://github.com/builderpepc/BDSearchFilters/
@@ -28,6 +28,7 @@ module.exports = class BDSearchFilters {
             literalTerms: [],
             literalsCaseSensitive: false,
             requireAllLiterals: false,
+            searchRegex: null,
         }
     }
 
@@ -104,6 +105,8 @@ module.exports = class BDSearchFilters {
     updateFilters() {
         // split literals by newline and eliminate empty terms or spaces
         window.ExtraSearchFilters.searchFilters.literalTerms = document.getElementById('bdsearchfilters-search-literal-text').value.split("\n").filter((x)=> (x && x != ' '));
+        let regexValue = document.getElementById('bdsearchfilters-search-regex').value;
+        window.ExtraSearchFilters.searchFilters.searchRegex = regexValue != "" ? new RegExp(regexValue) : null;
         for (const k of Object.keys(window.ExtraSearchFilters.newFilters)) {
             window.ExtraSearchFilters.searchFilters[k] = window.ExtraSearchFilters.newFilters[k];
         }
@@ -128,7 +131,8 @@ module.exports = class BDSearchFilters {
     isPassingFilters(result) {
         // result is an item returned by getSearchResults()
         // return ((window.ExtraSearchFilters.searchFilters.literalTerms.filter((x) => (result.firstChild.firstChild.firstChild.firstChild.getElementsByClassName(RESULT_MSG_CONTENT_CLASS).length > 0 && result.firstChild.firstChild.firstChild.firstChild.children[2].innerText.includes(x)))).length == window.ExtraSearchFilters.searchFilters.literalTerms.length);
-        return (window.ExtraSearchFilters.searchFilters.literalTerms.length > 0 ? ((window.ExtraSearchFilters.searchFilters.literalTerms.filter((x) => (result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS).length > 0 && (window.ExtraSearchFilters.searchFilters.literalsCaseSensitive ? result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS)[0].innerText.includes(x) : result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS)[0].innerText.toLowerCase().includes(x.toLowerCase()))))).length >= (window.ExtraSearchFilters.searchFilters.requireAllLiterals ? window.ExtraSearchFilters.searchFilters.literalTerms.length : 0)) : true);
+        const searchFilters = window.ExtraSearchFilters.searchFilters;
+        return (!(searchFilters.searchRegex) instanceof RegExp ? true : (result.innerText.search(searchFilters.searchRegex) != -1)) && (searchFilters.literalTerms.length > 0 ? ((searchFilters.literalTerms.filter((x) => (result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS).length > 0 && (searchFilters.literalsCaseSensitive ? result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS)[0].innerText.includes(x) : result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS)[0].innerText.toLowerCase().includes(x.toLowerCase()))))).length >= (searchFilters.requireAllLiterals ? searchFilters.literalTerms.length : 0)) : true);
     }
 
     evaluateFilters() {
@@ -230,7 +234,27 @@ module.exports = class BDSearchFilters {
                             window.ExtraSearchFilters.newFilters.requireAllLiterals = e;
                         }
                     })
-                })
+                }),
+
+                BdApi.React.createElement('h5', {class: SMALL_TITLE}, "Regular Expressions"),
+                BdApi.React.createElement('div', {class: MODAL_TEXT_CLASS}, "Enter a regular expression to look for in your query."),
+                BdApi.React.createElement(
+                    'textarea', 
+                    {
+                        id: "bdsearchfilters-search-regex",
+                        rows: 3,
+                        readonly: false,
+                        style: {
+                            'background': "var(--input-background)",
+                            'color': "var(--text-normal)",
+                            'font-family': "var(--font-primary)",
+                            'resize': 'none',
+                            'width': 'calc(100% - 12px)',
+                            'padding': '5px'
+                        }
+                    },
+                    this.searchFilters.searchRegex == null ? "" : this.searchFilters.searchRegex.toString().slice(1, -1)
+                ),
                 
             ],
             {
