@@ -5,6 +5,11 @@ Extra search filters for BetterDiscord. The filters are client side, so you migh
 
 Makes use of ZeresPluginLibrary.
 
+## How it works
+When you use Discord's search, an API request is sent with the normal filters you applied, and the results are returned and displayed. Then, the filters from this plugin are applied to the results _shown on the page_. Discord's API servers do not support the filters this plugin applies. This means, unfortunately, that it's impossible to condense all the filtered results into fewer pages.
+
+In theory, it could be done if you fetched all the results at once, but that would be very slow and would definitely get your account locked.
+
 ## Features
 - [ ] Filter bot/user messages
 - [ ] Exclude specific users
