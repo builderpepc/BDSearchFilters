@@ -2,7 +2,7 @@
  * @name BDSearchFilters
  * @author builderpepc
  * @description Client-side search filters and tools.
- * @version 0.2.1a
+ * @version 0.3.0a
  * @authorLink https://github.com/builderpepc/
  * @website https://github.com/builderpepc/BDSearchFilters/
  * @source https://github.com/builderpepc/BDSearchFilters/
@@ -30,6 +30,10 @@ module.exports = class BDSearchFilters {
             requireAllLiterals: false,
             searchRegex: null,
         }
+    }
+
+    getName () {
+        return "BDSearchFilters";
     }
 
     stop() { 
@@ -78,6 +82,9 @@ module.exports = class BDSearchFilters {
         window.ExtraSearchFilters.isSearchPanelOpen = this.isSearchPanelOpen;
         Dispatcher.subscribe("SEARCH_FINISH", this.evaluateFilters);
         
+        if (!BdApi.loadData(this.getName(), "hideFilteredResults")) {
+            BdApi.saveData(this.getName(), "hideFilteredResults", false);
+        }
     };
 
     addSearchFiltersButton() {
@@ -111,7 +118,6 @@ module.exports = class BDSearchFilters {
             window.ExtraSearchFilters.searchFilters[k] = window.ExtraSearchFilters.newFilters[k];
         }
         window.ExtraSearchFilters.evaluateFilters();
-        window.ExtraSearchFilters.updateResultCount();
     };
 
     isSearchPanelOpen() {
@@ -139,12 +145,23 @@ module.exports = class BDSearchFilters {
         if (!window.ExtraSearchFilters.isSearchPanelOpen()) return;
         let passCount = 0;
         let totalCount = 0; // for page
+        let hideResults = BdApi.loadData(window.ExtraSearchFilters.getName(), "hideFilteredResults");
         for (const rslt of window.ExtraSearchFilters.getSearchResults()) {
             if (!window.ExtraSearchFilters.isPassingFilters(rslt)) {
-                rslt.style.opacity = 0.3;
+                if (!hideResults) {
+                    rslt.style.opacity = 0.3;
+                }
+                else {
+                    rslt.hidden = true;
+                }
             }
             else {
-                rslt.style.opacity = 1;
+                if (!hideResults) {
+                    rslt.style.opacity = 1;
+                }
+                else {
+                    rslt.hidden = false;
+                }
                 passCount++;
             }
             totalCount++;
@@ -172,7 +189,8 @@ module.exports = class BDSearchFilters {
             }
             
         }
-        document.getElementById('bdsearchfilters-filtered-page-result-count').innerText = results.filter((x)=>(x.style.opacity == 1)).length.toString();
+        let hideResults = BdApi.loadData(window.ExtraSearchFilters.getName(), "hideFilteredResults");
+        document.getElementById('bdsearchfilters-filtered-page-result-count').innerText = results.filter((x)=>((!x.style.opacity.includes('.') && !hideResults) || (hideResults && !x.hidden))).length.toString();
         document.getElementById('bdsearchfilters-total-page-result-count').innerText = results.length.toString();
         
     }
@@ -262,6 +280,21 @@ module.exports = class BDSearchFilters {
                 onConfirm: this.updateFilters
             }
         );
+    };
+
+    getSettingsPanel() {
+        return BdApi.React.createElement(function (props) {
+            const [hideFilteredResults, setHideFilteredResults] = useState(BdApi.loadData(window.ExtraSearchFilters.getName(), "hideFilteredResults"));
+            return BdApi.React.createElement(ZeresPluginLibrary.DiscordModules.SwitchRow, {
+                value: hideFilteredResults,
+                children: "Hide Filtered Results",
+                note: "If enabled, make filtered resutls disappear instead of simply dimming them out. Makes for easier scrolling but you won't see what you might have accidentally excluded.",
+                onChange: (e, s, t) => {
+                    setHideFilteredResults(e);
+                    BdApi.saveData(window.ExtraSearchFilters.getName(), "hideFilteredResults", e);
+                }
+            })
+        })
     };
 
 }
