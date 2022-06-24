@@ -2,7 +2,7 @@
  * @name BDSearchFilters
  * @author builderpepc
  * @description Client-side search filters and tools.
- * @version 0.2.0a
+ * @version 0.2.1a
  * @authorLink https://github.com/builderpepc/
  * @website https://github.com/builderpepc/BDSearchFilters/
  * @source https://github.com/builderpepc/BDSearchFilters/
@@ -132,7 +132,7 @@ module.exports = class BDSearchFilters {
         // result is an item returned by getSearchResults()
         // return ((window.ExtraSearchFilters.searchFilters.literalTerms.filter((x) => (result.firstChild.firstChild.firstChild.firstChild.getElementsByClassName(RESULT_MSG_CONTENT_CLASS).length > 0 && result.firstChild.firstChild.firstChild.firstChild.children[2].innerText.includes(x)))).length == window.ExtraSearchFilters.searchFilters.literalTerms.length);
         const searchFilters = window.ExtraSearchFilters.searchFilters;
-        return (!(searchFilters.searchRegex instanceof RegExp) ? true : (result.innerText.search(searchFilters.searchRegex) != -1)) && (searchFilters.literalTerms.length > 0 ? ((searchFilters.literalTerms.filter((x) => (result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS).length > 0 && (searchFilters.literalsCaseSensitive ? result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS)[0].innerText.includes(x) : result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS)[0].innerText.toLowerCase().includes(x.toLowerCase()))))).length >= (searchFilters.requireAllLiterals ? searchFilters.literalTerms.length : 0)) : true);
+        return (!(searchFilters.searchRegex instanceof RegExp) ? true : (result.innerText.search(searchFilters.searchRegex) != -1)) && (searchFilters.literalTerms.length > 0 ? ((searchFilters.literalTerms.filter((x) => (result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS).length > 0 && (searchFilters.literalsCaseSensitive ? result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS)[0].innerText.includes(x) : result.getElementsByClassName(RESULT_MSG_CONTENT_CLASS)[0].innerText.toLowerCase().includes(x.toLowerCase()))))).length >= (searchFilters.requireAllLiterals ? searchFilters.literalTerms.length : 1)) : true);
     }
 
     evaluateFilters() {
